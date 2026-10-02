@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CareLink: shared health records for the barangay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F9FB; --surface:#FFFFFF; --surface2:#EAF3F7; --ink:#0D2837; --muted:#587184; --line:#D6E4EC;
+  --btn:#1B6FD1; --blue:#1B6FD1; --blue-soft:#E3EEFB; --teal:#0E9A9A; --teal-soft:#DDF3F2; --ok-ink:#0A6F6F;
+  --green:#2FAE68; --green-deep:#1E8A4F; --green-soft:#E0F5E9;
+  --amber:#E39A0B; --amber-soft:#FFF1D2; --amber-ink:#8A5A00;
+  --red:#D6403A; --red-soft:#FDE4E2; --red-ink:#A92B26;
+  --house-off:#DCE8EF; --house-edge:#B7CBD8; --road:#E3ECF2; --water:#CFE6F5;
+  --font-head:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1822; --surface:#10242F; --surface2:#16303D; --ink:#E6F2F8; --muted:#8FA9B8; --line:#25404F;
+    --btn:#2F7BE0; --blue:#4C93F0; --blue-soft:#14304F; --teal:#2CC3C0; --teal-soft:#12383A; --ok-ink:#5FDAD6;
+    --green:#34B873; --green-deep:#7BE0A5; --green-soft:#12362457;
+    --amber:#F0B13A; --amber-soft:#3A2E10; --amber-ink:#F4C766;
+    --red:#F0645E; --red-soft:#3C1A1A; --red-ink:#F4908B;
+    --house-off:#1E3643; --house-edge:#365466; --road:#18303C; --water:#143A52;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1822; --surface:#10242F; --surface2:#16303D; --ink:#E6F2F8; --muted:#8FA9B8; --line:#25404F;
+  --btn:#2F7BE0; --blue:#4C93F0; --blue-soft:#14304F; --teal:#2CC3C0; --teal-soft:#12383A; --ok-ink:#5FDAD6;
+  --green:#34B873; --green-deep:#7BE0A5; --green-soft:#12362457;
+  --amber:#F0B13A; --amber-soft:#3A2E10; --amber-ink:#F4C766;
+  --red:#F0645E; --red-soft:#3C1A1A; --red-ink:#F4908B;
+  --house-off:#1E3643; --house-edge:#365466; --road:#18303C; --water:#143A52;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.15;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,4.6vw,3.3rem);font-weight:700}
+h2{font-size:1.35rem;font-weight:700}
+h3{font-size:1.05rem;font-weight:700}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 20px 48px}
+
+/* top bar */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 20px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-weight:700;font-size:1.3rem}
+.brand svg{width:34px;height:34px}
+.spacer{flex:1}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:.45rem .85rem;border-radius:9px;font-weight:600;font-size:.92rem;cursor:pointer;color:var(--muted);min-height:38px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.who{display:flex;align-items:center;gap:12px}
+.who b{display:block;font-size:.92rem;line-height:1.2}
+.who small{color:var(--muted);font-size:.8rem}
+.tabs{background:var(--surface);border-bottom:1px solid var(--line);padding:0 20px;display:flex;gap:6px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:.8rem 1rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--teal)}
+
+/* buttons, chips, cards */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:.6rem 1.05rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);
+  font-weight:600;font-size:.95rem;cursor:pointer;min-height:44px;color:var(--ink)}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--btn);border-color:var(--btn);color:#fff}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.teal{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.sm{min-height:36px;padding:.35rem .8rem;font-size:.88rem}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:999px;font-size:.82rem;font-weight:600;white-space:nowrap}
+.r-high{background:var(--red-soft);color:var(--red-ink)}
+.r-watch{background:var(--amber-soft);color:var(--amber-ink)}
+.r-ok{background:var(--teal-soft);color:var(--ok-ink)}
+.r-none{background:var(--surface2);color:var(--muted)}
+.st{background:var(--blue-soft);color:var(--blue)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.card + .card{margin-top:16px}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.two > .card + .card{margin-top:0}
+.stack > * + *{margin-top:16px}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.page-title{margin:4px 0 16px}
+.page-title p{color:var(--muted);margin-top:4px}
+
+/* login */
+.login{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:48px;align-items:center;max-width:1200px;margin:0 auto;padding:40px 20px 56px}
+@media (max-width:900px){.login{grid-template-columns:1fr;gap:28px;padding-top:24px}}
+.lead{font-size:1.1rem;color:var(--muted);margin:16px 0 22px;max-width:52ch}
+.login .map-wrap{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px}
+.caption{color:var(--muted);font-size:.9rem;margin-top:8px}
+.role-btn{display:flex;gap:14px;align-items:center;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;margin-top:12px}
+.role-btn:hover{border-color:var(--teal);background:var(--surface2)}
+.role-btn .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--teal-soft);color:var(--ok-ink);display:grid;place-items:center}
+.role-btn b{display:block;font-family:var(--font-head);font-size:1.1rem}
+.role-btn span.d{color:var(--muted);font-size:.9rem;display:block}
+.role-btn span.p{font-size:.82rem;color:var(--ok-ink);font-weight:600}
+
+/* map */
+.map{width:100%;height:auto;display:block}
+.map .roads path{stroke:var(--road);stroke-width:14;stroke-linecap:round;fill:none}
+.map .water{stroke:var(--water);stroke-width:26;fill:none;stroke-linecap:round}
+.map .geo{font:500 11px var(--font-body);fill:var(--muted);letter-spacing:.08em}
+.house{cursor:pointer;outline:none}
+.house path{fill:var(--house-off);stroke:var(--house-edge);stroke-width:1.5;stroke-linejoin:round;transform-box:fill-box;transform-origin:center}
+.house.on path{fill:var(--green);stroke:var(--green-deep)}
+.house.ring-high path{stroke:var(--red);stroke-width:4}
+.house.ring-watch path{stroke:var(--amber);stroke-width:4}
+.house text{font:600 10px var(--font-body);fill:var(--ink);text-anchor:middle;pointer-events:none}
+.house.on text{fill:#fff}
+.house.dim{opacity:.2}
+.house .selbox{fill:none;stroke:var(--blue);stroke-width:2;stroke-dasharray:4 3}
+.house:focus-visible .selbox,.house:focus-visible path{stroke:var(--blue);stroke-width:3}
+.house.sweep{cursor:default}
+.house.sweep path{animation:light .8s var(--d,0ms) both}
+.house.pop path{animation:pop .9s ease-out}
+@keyframes light{from{fill:var(--house-off)}to{fill:var(--green)}}
+@keyframes pop{0%{fill:var(--house-off);transform:scale(1)}40%{transform:scale(1.3)}100%{fill:var(--green);transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){
+  .house.sweep path{animation:none;fill:var(--green)}
+  .house.pop path{animation:none}
+}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:.86rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.legend i{display:inline-block;width:16px;height:12px;border-radius:3px;border:2px solid var(--house-edge);background:var(--house-off)}
+.legend i.g{background:var(--green);border-color:var(--green-deep)}
+.legend i.rr{border-color:var(--red);background:var(--green)}
+.legend i.aa{border-color:var(--amber);background:var(--green)}
+.legend i.hs{background:var(--teal);border-color:var(--teal);width:14px;height:14px;border-radius:4px;position:relative}
+.progress{height:10px;border-radius:99px;background:var(--surface2);overflow:hidden;margin:8px 0 14px}
+.progress b{display:block;height:100%;background:var(--green);border-radius:99px}
+
+/* forms */
+.form label{display:block;font-weight:600;font-size:.92rem;margin-top:12px}
+.form input[type=number],.form input[type=text],.form input[type=date],.form select,.form textarea,.field{width:100%;margin-top:5px;padding:.6rem .75rem;border-radius:10px;border:1px solid var(--line);background:var(--surface);min-height:44px}
+.form textarea{min-height:84px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form .check{display:flex;gap:10px;align-items:flex-start;font-weight:500}
+.form .check input{margin-top:4px;width:18px;height:18px;flex:none}
+fieldset{border:0;padding:0;margin:14px 0 0}
+legend{font-weight:600;font-size:.92rem;padding:0}
+.preview{margin-top:16px;padding:14px;border-radius:12px;background:var(--surface2);border:1px dashed var(--line)}
+.err{color:var(--red-ink);font-weight:600;min-height:1.2em;margin-top:10px;font-size:.92rem}
+.who-line{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 6px}
+
+/* result / lists */
+.reasons{margin:10px 0 0;padding-left:20px}
+.reasons li{margin:3px 0}
+.vitals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.vitals div{background:var(--surface2);border-radius:12px;padding:10px 12px}
+.vitals b{display:block;font-family:var(--font-head);font-size:1.3rem}
+.vitals span{font-size:.8rem;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0}
+.list li + li{border-top:1px solid var(--line)}
+.list .item{display:flex;width:100%;gap:12px;align-items:center;justify-content:space-between;text-align:left;background:none;border:0;padding:11px 6px;cursor:pointer;border-radius:10px}
+.list .item:hover{background:var(--surface2)}
+.list .item[aria-current="true"]{background:var(--blue-soft)}
+.list .item b{display:block}
+.list .item small{color:var(--muted)}
+.callout{padding:12px 14px;border-radius:12px;background:var(--teal-soft);color:var(--ink);border:1px solid var(--line);font-size:.92rem}
+.callout.warn{background:var(--red-soft)}
+.callout.amber{background:var(--amber-soft)}
+
+/* doctor record */
+.rec-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.qr{display:block;background:#fff;color:#0D2837;padding:5px;border-radius:10px;border:1px solid var(--line)}
+.pid{font-family:var(--font-body);font-weight:600;font-size:.85rem;color:var(--muted)}
+.fac-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.fac-chips .chip{background:var(--blue-soft);color:var(--blue)}
+.tests{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:10px}
+.tests div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.tests b{display:block}
+.timeline{list-style:none;margin:12px 0 0;padding:0 0 0 18px;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:0 0 18px 16px}
+.timeline li::before{content:"";position:absolute;left:-26px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--teal);border:2px solid var(--surface)}
+.timeline li.note::before{background:var(--blue)}
+.timeline li.ref::before{background:var(--amber)}
+.timeline .when{font-weight:600}
+.timeline .meta{color:var(--muted);font-size:.86rem}
+.trend{width:100%;height:auto;display:block;margin-top:8px}
+.trend text{font:500 10px var(--font-body);fill:var(--muted)}
+
+/* referral stepper */
+.stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0}
+.stepper div{text-align:center;font-size:.8rem;color:var(--muted);font-weight:600}
+.stepper div::before{content:"";display:block;height:6px;border-radius:99px;background:var(--line);margin-bottom:6px}
+.stepper div.done{color:var(--ok-ink)}
+.stepper div.done::before{background:var(--teal)}
+
+/* officer */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.kpi b{display:block;font-family:var(--font-head);font-size:2rem;line-height:1.1}
+.kpi span{color:var(--muted);font-size:.9rem}
+.bars .bar{display:grid;grid-template-columns:70px 1fr 44px;gap:10px;align-items:center;margin:10px 0;font-size:.92rem}
+.bars .track{height:12px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.bars .track b{display:block;height:100%;background:var(--green)}
+.info-strip{margin-top:12px;padding:12px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+
+/* toast + modal */
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;display:grid;gap:8px;width:min(92vw,460px)}
+.toast{background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:12px;font-weight:600;font-size:.92rem;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.modal-bg{position:fixed;inset:0;background:rgba(5,20,30,.55);z-index:40;display:grid;place-items:center;padding:20px}
+.modal{background:var(--surface);border-radius:18px;max-width:560px;width:100%;padding:24px;max-height:90vh;overflow:auto}
+.modal ul{padding-left:20px}
+.modal li{margin:6px 0}
+.fine{font-size:.85rem;color:var(--muted);margin-top:16px}
+.table-wrap{overflow-x:auto}
+.cardsvg{width:100%;max-width:440px;height:auto;display:block;margin:0 auto;border-radius:24px;box-shadow:0 0 0 1px var(--line),0 14px 36px rgba(10,40,60,.14)}
+.cit-form{max-width:460px;margin:24px auto}
+.rolegroups{display:flex;gap:12px;flex-wrap:wrap}
+.rg{display:flex;flex-direction:column;gap:2px}
+.rg + .rg{border-left:1px solid var(--line);padding-left:12px}
+.rg-label{font-size:.74rem;color:var(--muted);font-weight:600;padding-left:4px}
+.rgroup{margin-top:22px;padding:2px 0 4px 16px;border-left:4px solid var(--teal)}
+.rgroup.g-hospital{border-left-color:var(--blue)}
+.rgroup.g-patients{border-left-color:var(--green)}
+.rgroup h3{font-size:1.15rem}
+.rgroup .role-btn:first-of-type{margin-top:10px}
+.vf{background:#0D2837;border-radius:16px;padding:22px 18px;color:#E6F2F8;text-align:center}
+.vf-box{position:relative;width:min(100%,230px);aspect-ratio:1;margin:0 auto;display:grid;place-items:center}
+.vf-box .c{position:absolute;width:36px;height:36px;border:4px solid #2CC3C0}
+.vf-box .tl{top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:12px}
+.vf-box .tr{top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:12px}
+.vf-box .bl{bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:12px}
+.vf-box .br{bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:12px}
+.vf-box .line{position:absolute;left:10px;right:10px;top:50%;height:3px;background:#2CC3C0;box-shadow:0 0 14px #2CC3C0;animation:sweepline 1s ease-in-out infinite alternate}
+@keyframes sweepline{from{top:12%}to{top:86%}}
+@media (prefers-reduced-motion:reduce){.vf-box .line{animation:none}}
+.vf p{margin-top:14px;font-weight:600;min-height:1.4em}
+.vf .hint{color:#8FB3C4;font-size:.9rem;max-width:22ch}
+.tiles{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.tile{display:flex;width:100%;align-items:center;gap:12px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+.tile:hover:not(:disabled){border-color:var(--teal);background:var(--surface2)}
+.tile:disabled{opacity:.55;cursor:not-allowed}
+.tile .qr{flex:none;border-radius:6px;padding:3px}
+.tile span.t{flex:1;min-width:0}
+.tile b{display:block}
+.tile small{color:var(--muted)}
+.steps{padding-left:20px;margin:8px 0 0}
+.steps li{margin:7px 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+var $ = function(s){return document.querySelector(s);};
+var esc = function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var fmt=function(iso){var p=iso.split('-').map(Number);return MON[p[1]-1]+' '+p[2]+', '+p[0];};
+var mkIso=function(y,m,d){return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
+var TODAY='2026-10-02';
+function rng(seed){var s=seed>>>0;return function(){s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};}
+
+var FAC=['Barangay Health Station','Rural Health Unit','Municipal Hospital','Provincial Hospital'];
+var BHS_TESTS=['Blood pressure check','Blood sugar (finger-prick)'];
+var LAB_TESTS=['Fasting blood sugar (lab)','Lipid profile','Urinalysis','ECG','HbA1c'];
+var STEPS=['Sent','Received','Seen by doctor','Follow-up set'];
+var RISK={high:{t:'Needs referral',c:'r-high',a:'Refer to a doctor within the week.'},watch:{t:'Monitor',c:'r-watch',a:'Recheck in 2 weeks and give lifestyle advice.'},ok:{t:'Normal range',c:'r-ok',a:'Next routine screening in 6 months.'}};
+
+var ROLES={
+  bhw:{label:'Health worker',person:'Maria Santos',title:'Barangay health worker',desc:'Record check-ups, see which households are done, and send referrals.',views:[['households','Households'],['referrals','Referrals']]},
+  doctor:{label:'Doctor',person:'Dr. Ramon Cruz',title:'Physician, Provincial Hospital',desc:'Scan a patient\'s QR code or search records to see their full history from every facility, and answer referrals.',views:[['scan','Scan patient QR'],['records','Patient records'],['referrals','Referrals']]},
+  officer:{label:'Health officer',person:'Elena Dizon',title:'Municipal health officer',desc:'See coverage, high-risk areas, and referral progress for the barangay.',views:[['dashboard','Dashboard'],['referrals','Referrals']]},
+  citizen:{label:'Citizen',person:'',title:'Patient',desc:'Log in with your patient ID and birth date to download your health card and QR code.',views:[['mycard','My health card']]}
+};
+var GROUPS=[
+  {id:'barangay',label:'Barangay staff',note:'Work inside the barangay: household visits, local screening, and community data.',roles:['bhw','officer']},
+  {id:'hospital',label:'Hospital',note:'Work in a large hospital that receives patients and referrals from many barangays.',roles:['doctor']},
+  {id:'patients',label:'Patients',note:'Residents who want their own health card and QR code.',roles:['citizen']}
+];
+var ICONS={
+  bhw:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M12 12v5M9.5 14.5h5"/></svg>',
+  doctor:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a4 4 0 008 0V3"/><path d="M10 13v2a5 5 0 0010 0v-1"/><circle cx="20" cy="12" r="2"/></svg>',
+  officer:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>',
+  citizen:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>'
+};
+var LOGO='<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="11" fill="#0E9A9A"/><path d="M8 19L20 9l12 10v12H8z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 17v10M15 22h10" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>';
+
+/* ---------- risk rules ---------- */
+function evaluate(v,age,fam,sym){
+  var reasons=[],level='ok';
+  function bump(l){if(l==='high')level='high';else if(l==='watch'&&level!=='high')level='watch';}
+  if(v.sys>=140||v.dia>=90){bump('high');reasons.push('Blood pressure '+v.sys+'/'+v.dia+' is at or above 140/90.');}
+  else if(v.sys>=130||v.dia>=80){bump('watch');reasons.push('Blood pressure '+v.sys+'/'+v.dia+' is above the normal range.');}
+  if(v.fbs>=126){bump('high');reasons.push('Fasting blood sugar '+v.fbs+' mg/dL is at or above 126.');}
+  else if(v.fbs>=100){bump('watch');reasons.push('Fasting blood sugar '+v.fbs+' mg/dL is above normal (100 to 125).');}
+  if(sym>=2){bump('watch');reasons.push('Two or more symptoms reported today.');}
+  if(fam&&age>=40){bump('watch');reasons.push('Family history of high blood pressure or diabetes, and age 40 or older.');}
+  if(!reasons.length)reasons.push('Blood pressure and blood sugar are in the normal range.');
+  return {level:level,reasons:reasons};
+}
+
+/* ---------- sample data ---------- */
+var hhs=[],referrals=[];
+(function build(){
+  var r=rng(20261002);
+  var xs=[40,100,160,220,330,390,450,510],ys=[45,115,200,270,355,425];
+  var fem=['Maria','Ana','Luz','Carmen','Rosa','Teresita','Lourdes','Josefina','Imelda','Corazon','Nenita','Gloria'];
+  var mal=['Jose','Pedro','Ramon','Antonio','Eduardo','Rolando','Benito','Danilo','Fernando','Alberto','Rodrigo','Manuel'];
+  var sur=['Santos','Reyes','Cruz','Bautista','Ocampo','Garcia','Mendoza','Torres','Flores','Dela Cruz','Villanueva','Ramos','Aquino','Castillo','Navarro','Salazar','Domingo','Manalo','Pascual','Soriano','Valdez','Aguilar','Gonzales','Lopez','Rivera','Marquez','Padilla','Evangelista','Panganiban','Magsaysay','Tolentino','Dizon','Macaraeg','Hernandez','Alcantara','Bernardo','Cabrera','Delos Santos','Enriquez','Fajardo','Galang','Ibarra','Jimenez','Lacson','Mercado','Nepomuceno','Ortega','Perez'];
+  var profiles=['ok','ok','watch','high','ok','watch','high','ok','ok','high','watch','ok','high','ok','watch','high'];
+  var pi=0,k=0;
+  for(var row=0;row<6;row++){for(var col=0;col<8;col++){
+    var i=k++, female=(i*7+3)%2===0;
+    var first=(female?fem:mal)[(i*5+3)%12];
+    var h={id:i+1,code:String(i+1).padStart(2,'0'),x:xs[col],y:ys[row],family:sur[i],
+      purok:(col<4?1:2)+(row<3?0:2),
+      patient:{name:first+' '+sur[i],age:30+Math.floor(r()*50),sex:female?'Female':'Male',fam:r()<0.4},
+      pid:'CL-26-'+String(1000+i*37).padStart(4,'0'),visits:[],notes:[]};
+    h.sweepOn=(h.id*7)%10<6;
+    var bm=(i*5)%12+1,bd=(i*11)%27+1;
+    h.patient.dob=mkIso((bm<10||(bm===10&&bd<=2))?2026-h.patient.age:2025-h.patient.age,bm,bd);
+    if(r()<0.56){
+      var prof=profiles[pi++%profiles.length];
+      var nv=1+Math.floor(r()*3),lm=6+Math.floor(r()*4);
+      for(var v=0;v<nv;v++){
+        var m=Math.max(1,lm-(nv-1-v)*2),d=1+Math.floor(r()*27);
+        var src=v===nv-1?(r()<0.7?0:1):Math.floor(r()*3);
+        var base=makeVitals(prof,r),shift=(nv-1-v);
+        var sys=base.sys-(prof==='ok'?0:Math.round((r()*14-4)*shift)),dia=base.dia-(prof==='ok'?0:Math.round((r()*8-3)*shift));
+        var tests=src===0?BHS_TESTS.slice():pick(LAB_TESTS,1+Math.floor(r()*3),r);
+        var vis={date:mkIso(2026,m,d),source:FAC[src],by:src===0?'Maria Santos, BHW':(src===1?'RHU nurse':'Municipal Hospital lab'),
+          sys:sys,dia:Math.min(dia,sys-25),fbs:base.fbs,wt:Math.round(48+r()*38),sym:r()<0.15?2:0,tests:tests};
+        vis.risk=evaluate(vis,h.patient.age,h.patient.fam,vis.sym);
+        h.visits.push(vis);
+      }
+    }
+    hhs.push(h);
+  }}
+  var rn=0,statuses=[0,1,2,3,2,1,0],facs=[1,2,1,1,2,1,1];
+  hhs.filter(function(h){return lvlOf(h)==='high';}).slice(0,7).forEach(function(h,idx){
+    var l=h.visits[h.visits.length-1],st=statuses[idx],n=[];
+    var sent='2026-09-'+String(8+idx*2).padStart(2,'0');
+    n.push({who:'Maria Santos, BHW',date:sent,text:'Referred after home screening: '+l.sys+'/'+l.dia+' mmHg, fasting blood sugar '+l.fbs+' mg/dL.'});
+    if(st>=1)n.push({who:FAC[facs[idx]],date:sent,text:'Referral received.'});
+    if(st>=2)n.push({who:'Dr. Ramon Cruz',date:sent,text:'Seen. Treatment started and advice given. Recheck blood pressure and sugar at follow-up.'});
+    referrals.push({id:'R-'+(101+rn++),hid:h.id,to:FAC[facs[idx]],sentOn:sent,status:st,notes:n,fu:st===3?(idx===3?'2026-09-25':'2026-10-16'):null,missed:idx===3});
+  });
+})();
+function makeVitals(p,r){
+  if(p==='ok')return {sys:108+Math.floor(r()*20),dia:66+Math.floor(r()*13),fbs:78+Math.floor(r()*20)};
+  if(p==='watch'){return r()<0.5?{sys:130+Math.floor(r()*9),dia:80+Math.floor(r()*9),fbs:85+Math.floor(r()*15)}:{sys:112+Math.floor(r()*16),dia:70+Math.floor(r()*9),fbs:100+Math.floor(r()*23)};}
+  var t=r();
+  if(t<0.45)return {sys:142+Math.floor(r()*28),dia:90+Math.floor(r()*14),fbs:90+Math.floor(r()*35)};
+  if(t<0.75)return {sys:120+Math.floor(r()*18),dia:74+Math.floor(r()*14),fbs:128+Math.floor(r()*42)};
+  return {sys:146+Math.floor(r()*24),dia:92+Math.floor(r()*12),fbs:130+Math.floor(r()*35)};
+}
+function pick(arr,n,r){var a=arr.slice(),o=[];while(o.length<n&&a.length){o.push(a.splice(Math.floor(r()*a.length),1)[0]);}return o;}
+function lvlOf(h){return h.visits.length?h.visits[h.visits.length-1].risk.level:null;}
+var lvl=lvlOf;
+var latest=function(h){return h.visits[h.visits.length-1];};
+var byId=function(id){return hhs.find(function(h){return h.id===id;});};
+var chip=function(l){return l?'<span class="chip '+RISK[l].c+'">'+RISK[l].t+'</span>':'<span class="chip r-none">Not screened</span>';};
+var refsFor=function(hid){return referrals.filter(function(r){return r.hid===hid;});};
+var openRef=function(hid){return referrals.find(function(r){return r.hid===hid&&r.status<3;});};
+
+function stats(){
+  var total=hhs.length,scr=hhs.filter(function(h){return lvl(h);}).length;
+  return {total:total,scr:scr,pct:Math.round(scr/total*100),
+    high:hhs.filter(function(h){return lvl(h)==='high';}).length,
+    open:referrals.filter(function(r){return r.status<3;}).length,
+    missed:referrals.filter(function(r){return r.missed;}).length,
+    purok:[1,2,3,4].map(function(p){var a=hhs.filter(function(h){return h.purok===p;}),s=a.filter(function(h){return lvl(h);}).length;return {p:p,total:a.length,s:s,pct:Math.round(s/a.length*100)};})};
+}
+
+/* ---------- state ---------- */
+var state={screen:'login',role:null,view:null,sel:null,panel:'view',filter:'all',pop:null,q:'',rf:'all',rsel:null,offSel:null,modal:false,cit:null,scanning:null,scanned:null};
+
+/* ---------- QR + trend ---------- */
+function qr(seed,size){
+  var n=21,h=0;for(var i=0;i<seed.length;i++)h=(Math.imul(h,31)+seed.charCodeAt(i))>>>0;
+  var r=rng(h||1),d='';
+  function fin(x,y){return (x<8&&y<8)||(x>=n-8&&y<8)||(x<8&&y>=n-8);}
+  for(var y=0;y<n;y++)for(var x=0;x<n;x++){if(fin(x,y))continue;if(r()<0.5)d+='M'+x+','+y+'h1v1h-1z';}
+  function f(ox,oy){return '<path fill-rule="evenodd" d="M'+ox+','+oy+'h7v7h-7z M'+(ox+1)+','+(oy+1)+'v5h5v-5z"/><rect x="'+(ox+2)+'" y="'+(oy+2)+'" width="3" height="3"/>';}
+  return '<svg class="qr" viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" width="'+size+'" height="'+size+'" role="img" aria-label="Patient QR code" fill="currentColor"><path d="'+d+'"/>'+f(0,0)+f(n-7,0)+f(0,n-7)+'</svg>';
+}
+function trend(h){
+  var v=h.visits;
+  if(v.length<2)return '<p class="muted small" style="margin-top:8px">Only one visit so far, so there is no trend yet.</p>';
+  var W=320,H=110,pad=22,hi=Math.max.apply(null,v.map(function(x){return x.sys;}).concat([150]))+8,lo=Math.min.apply(null,v.map(function(x){return x.dia;}).concat([60]))-8;
+  var X=function(i){return pad+i*(W-2*pad)/(v.length-1);},Y=function(n){return H-pad-(n-lo)/(hi-lo)*(H-2*pad);};
+  var line=function(k){return v.map(function(x,i){return X(i)+','+Y(x[k]);}).join(' ');};
+  var dots=function(k,c){return v.map(function(x,i){return '<circle cx="'+X(i)+'" cy="'+Y(x[k])+'" r="3.5" fill="'+c+'"/><text x="'+X(i)+'" y="'+(Y(x[k])-8)+'" text-anchor="middle">'+x[k]+'</text>';}).join('');};
+  return '<svg class="trend" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Blood pressure trend over visits">'+
+    '<line x1="'+pad+'" x2="'+(W-pad)+'" y1="'+Y(140)+'" y2="'+Y(140)+'" stroke="var(--red)" stroke-dasharray="4 4" opacity=".6"/><text x="'+(W-pad)+'" y="'+(Y(140)-4)+'" text-anchor="end">140 limit</text>'+
+    '<polyline points="'+line('sys')+'" fill="none" stroke="var(--blue)" stroke-width="2.5"/><polyline points="'+line('dia')+'" fill="none" stroke="var(--teal)" stroke-width="2.5"/>'+
+    dots('sys','var(--blue)')+dots('dia','var(--teal)')+
+    v.map(function(x,i){return '<text x="'+X(i)+'" y="'+(H-4)+'" text-anchor="middle">'+fmt(x.date).replace(/, \d+/,'')+'</text>';}).join('')+'</svg>'+
+    '<p class="small muted"><span style="color:var(--blue);font-weight:600">Blue</span> is the top number, <span style="color:var(--ok-ink);font-weight:600">teal</span> is the bottom number.</p>';
+}
+
+/* ---------- map ---------- */
+function mapSVG(o){
+  o=o||{};
+  var filter=o.filter||'all',selected=o.selected||null,sweep=!!o.sweep,labels=o.labels!==false,inter=o.interactive!==false,pop=o.pop||null;
+  var g='';
+  hhs.forEach(function(h){
+    var l=lvl(h),sc=!!l,dim=false;
+    if(filter==='pending')dim=sc;else if(filter==='screened')dim=!sc;else if(filter==='high')dim=l!=='high';
+    var cls=['house'];
+    if(sweep){if(h.sweepOn)cls.push('sweep');}
+    else{if(sc)cls.push('on');if(l==='high')cls.push('ring-high');else if(l==='watch')cls.push('ring-watch');}
+    if(dim)cls.push('dim');if(pop===h.id)cls.push('pop');
+    var title='Household '+h.code+', '+h.family+' family, '+(sc?RISK[l].t.toLowerCase()+', screened':'not yet screened');
+    var attrs=inter?'data-a="pick-house" data-hid="'+h.id+'" tabindex="0" role="button" aria-label="'+esc(title)+'"':'aria-hidden="true"';
+    g+='<g class="'+cls.join(' ')+'" '+attrs+' transform="translate('+h.x+','+h.y+')"'+(sweep?' style="--d:'+(500+((h.id*53)%29)*70)+'ms"':'')+'>'+
+      (inter?'<title>'+esc(title)+'</title>':'')+
+      (selected===h.id?'<rect class="selbox" x="-5" y="-5" width="50" height="38" rx="9"/>':'')+
+      '<path d="M0,13 L20,1 L40,13 L40,28 L0,28 Z"/>'+(labels?'<text x="20" y="23">'+h.code+'</text>':'')+'</g>';
+  });
+  return '<svg class="map" viewBox="0 0 640 480" role="group" aria-label="Map of Barangay San Isidro with 48 households">'+
+    '<path class="water" d="M590,-10 C560,120 625,200 588,300 S604,440 584,490"/>'+
+    '<text class="geo" transform="translate(618 250) rotate(90)">CREEK</text>'.replace('CREEK','Creek')+
+    '<g class="roads"><path d="M20,94H560M20,249H560M20,404H560M285,8V472"/></g>'+
+    '<g transform="translate(268,155)"><title>Barangay health station</title><rect width="34" height="34" rx="8" fill="var(--teal)"/><path d="M17 8v18M8 17h18" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>'+
+    g+'</svg>';
+}
+function legend(){
+  return '<div class="legend"><span><i class="g"></i>Screened</span><span><i></i>Not yet screened</span><span><i class="rr"></i>Needs referral</span><span><i class="aa"></i>Monitor</span><span><i class="hs"></i>Health station</span></div>';
+}
+function filterSeg(){
+  var f=[['all','All'],['pending','Not screened'],['screened','Screened'],['high','Needs referral']];
+  return '<div class="seg" role="group" aria-label="Filter the map">'+f.map(function(x){return '<button data-a="filter" data-f="'+x[0]+'" aria-pressed="'+(state.filter===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>';
+}
+
+/* ---------- chrome ---------- */
+function topbarLogin(){return '<header class="topbar"><div class="brand">'+LOGO+'<span>CareLink</span></div><div class="spacer"></div><span class="chip r-none">Demo with sample data</span></header>';}
+function topbarApp(){
+  var R=ROLES[state.role];
+  return '<header class="topbar"><div class="brand">'+LOGO+'<span>CareLink</span></div>'+
+    '<div class="rolegroups" role="group" aria-label="Switch role">'+GROUPS.map(function(g){return '<div class="rg"><span class="rg-label">'+g.label+'</span><div class="seg">'+g.roles.map(function(k){return '<button data-a="switch-role" data-role="'+k+'" aria-pressed="'+(state.role===k)+'">'+ROLES[k].label+'</button>';}).join('')+'</div></div>';}).join('')+'</div>'+
+    '<div class="spacer"></div><div class="who"><div><b>'+(state.role==='citizen'?byId(state.cit).patient.name:R.person)+'</b><small>'+R.title+'</small></div><button class="btn ghost sm" data-a="signout">Sign out</button></div></header>';
+}
+function tabs(){
+  return '<nav class="tabs" aria-label="Sections">'+ROLES[state.role].views.map(function(v){return '<button data-a="nav" data-view="'+v[0]+'"'+(state.view===v[0]?' aria-current="page"':'')+'>'+v[1]+'</button>';}).join('')+'</nav>';
+}
+
+/* ---------- login ---------- */
+function loginView(){
+  return '<section class="login"><div><h1>One record for every patient in the barangay</h1>'+
+    '<p class="lead">CareLink lets health workers, doctors, and health officers share the same check-up history, so nobody repeats tests or slips through the cracks.</p>'+
+    '<div class="map-wrap">'+mapSVG({sweep:true,labels:false,interactive:false})+'<p class="caption">Each house turns green once its household has been screened.</p></div></div>'+
+    '<div><h2>Try the demo as</h2><p class="muted" style="margin-top:6px">You can switch roles at any time from the top bar.</p>'+
+    GROUPS.map(function(g){return '<section class="rgroup g-'+g.id+'" aria-labelledby="g-'+g.id+'"><h3 id="g-'+g.id+'">'+g.label+'</h3><p class="muted small">'+g.note+'</p>'+g.roles.map(function(k){var R=ROLES[k];return '<button class="role-btn" data-a="login" data-role="'+k+'"><span class="ic">'+ICONS[k]+'</span><span><b>'+R.label+'</b><span class="d">'+R.desc+'</span><span class="p">'+(k==='citizen'?'Log in with patient ID and birth date':'Signing in as '+R.person+', '+R.title)+'</span></span></button>';}).join('')+'</section>';}).join('')+
+    '<p class="fine">This is a design mockup. Every person, household, and number is made up, and nothing is saved.</p></div></section>';
+}
+
+/* ---------- BHW: households ---------- */
+function viewHouseholds(){
+  var s=stats();
+  return '<div class="wrap"><div class="page-title"><h2>Households in Barangay San Isidro</h2><p>Tap a house to record a check-up or see the patient\'s history.</p></div>'+
+    '<div class="two"><section class="card"><div class="card-head"><div><h3>'+s.scr+' of '+s.total+' households screened</h3><div class="progress" style="width:240px"><b style="width:'+s.pct+'%"></b></div></div>'+filterSeg()+'</div>'+
+    mapSVG({filter:state.filter,selected:state.sel,pop:state.pop})+legend()+'</section>'+
+    '<section class="card" id="side" aria-live="polite">'+sidePanel()+'</section></div></div>';
+}
+function sidePanel(){
+  var h=byId(state.sel);
+  if(!h){
+    var next=hhs.filter(function(x){return !lvl(x);}).sort(function(a,b){return b.patient.age-a.patient.age;}).slice(0,5);
+    return '<h3>Select a household</h3><p class="muted" style="margin:6px 0 12px">Pick a house on the map. Older residents who have not been screened yet are listed first.</p><ul class="list">'+
+      next.map(function(x){return '<li><button class="item" data-a="pick-house" data-hid="'+x.id+'"><span><b>Household '+x.code+', '+x.family+'</b><small>'+x.patient.name+', '+x.patient.age+' years old</small></span>'+chip(null)+'</button></li>';}).join('')+'</ul>';
+  }
+  var p=h.patient,head='<div class="who-line"><h3>Household '+h.code+', '+h.family+' family</h3></div><p class="muted small">Purok '+h.purok+'. Patient: '+p.name+', '+p.age+' years old, '+p.sex.toLowerCase()+'.</p>';
+  if(state.panel==='form')return head+checkupForm(h);
+  if(state.panel==='result')return head+resultPanel(h);
+  if(state.panel==='refer')return head+referForm(h);
+  var l=latest(h);
+  if(!l)return head+'<p style="margin:14px 0">No check-up on record yet.</p><button class="btn primary block" data-a="new-checkup">Start check-up</button>';
+  var ref=refsFor(h.id)[0];
+  return head+'<div class="who-line" style="margin-top:12px">'+chip(l.risk.level)+'<span class="muted small">Checked '+fmt(l.date)+'</span></div>'+vitalsBox(l)+
+    '<ul class="reasons">'+l.risk.reasons.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+
+    (ref?'<div class="callout" style="margin-top:14px"><b>Referral to '+esc(ref.to)+':</b> '+STEPS[ref.status]+(ref.fu?' (follow-up '+fmt(ref.fu)+')':'')+'</div>':'')+
+    '<div style="display:grid;gap:10px;margin-top:16px"><button class="btn primary" data-a="new-checkup">Record a new check-up</button>'+
+    (l.risk.level!=='ok'&&!openRef(h.id)?'<button class="btn" data-a="open-refer">Refer to a doctor</button>':'')+'</div>'+
+    '<h3 style="margin-top:20px">Earlier visits (shared with all facilities)</h3><ul class="list" style="margin-top:6px">'+
+    h.visits.slice().reverse().map(function(v){return '<li style="padding:9px 6px"><b>'+fmt(v.date)+'</b> at '+v.source+'<br><span class="muted small">'+v.sys+'/'+v.dia+' mmHg, sugar '+v.fbs+' mg/dL</span></li>';}).join('')+'</ul>';
+}
+function vitalsBox(v){
+  return '<div class="vitals"><div><b>'+v.sys+'/'+v.dia+'</b><span>Blood pressure (mmHg)</span></div><div><b>'+v.fbs+'</b><span>Blood sugar (mg/dL)</span></div><div><b>'+(v.wt?v.wt:'--')+'</b><span>Weight (kg)</span></div></div>';
+}
+function checkupForm(h){
+  return '<form id="checkup" class="form" novalidate><h3 style="margin-top:14px">New check-up</h3>'+
+    '<div class="row2"><label>Blood pressure, top number<input type="number" inputmode="numeric" name="sys" placeholder="e.g. 128"></label><label>Bottom number<input type="number" inputmode="numeric" name="dia" placeholder="e.g. 82"></label></div>'+
+    '<label>Fasting blood sugar (mg/dL)<input type="number" inputmode="numeric" name="fbs" placeholder="e.g. 105"></label>'+
+    '<label>Weight (kg), optional<input type="number" inputmode="numeric" name="wt" placeholder="e.g. 64"></label>'+
+    '<label class="check"><input type="checkbox" name="fam"'+(h.patient.fam?' checked':'')+'><span>A parent or sibling has high blood pressure or diabetes</span></label>'+
+    '<fieldset><legend>Symptoms today</legend>'+['Frequent thirst or urination','Headache or dizziness','Blurred vision'].map(function(s){return '<label class="check"><input type="checkbox" name="sym"><span>'+s+'</span></label>';}).join('')+'</fieldset>'+
+    '<div class="preview" id="preview"><span class="muted">Enter the blood pressure and blood sugar to see the risk flag.</span></div>'+
+    '<p class="err" id="err" role="alert"></p>'+
+    '<div style="display:grid;gap:10px"><button class="btn primary" type="submit">Save check-up</button>'+(lvl(h)?'<button class="btn" type="button" data-a="cancel">Cancel</button>':'')+'</div></form>';
+}
+function resultPanel(h){
+  var l=latest(h),R=RISK[l.risk.level];
+  return '<div class="callout" style="margin-top:14px">Saved. Household '+h.code+' is now green on the map, and any clinic can see this record.</div>'+
+    '<div class="who-line" style="margin-top:14px"><span class="chip '+R.c+'" style="font-size:1rem;padding:6px 14px">'+R.t+'</span></div>'+vitalsBox(l)+
+    '<ul class="reasons">'+l.risk.reasons.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>'+
+    '<p style="margin-top:12px"><b>Suggested next step:</b> '+R.a+'</p>'+
+    '<div style="display:grid;gap:10px;margin-top:16px">'+(l.risk.level!=='ok'?'<button class="btn '+(l.risk.level==='high'?'primary':'')+'" data-a="open-refer">Refer to a doctor</button>':'')+'<button class="btn" data-a="done">Done</button></div>';
+}
+function referForm(h){
+  var l=latest(h),sum=h.patient.name+', '+h.patient.age+' years old. Blood pressure '+l.sys+'/'+l.dia+' mmHg, fasting blood sugar '+l.fbs+' mg/dL. '+l.risk.reasons.join(' ');
+  return '<form id="referform" class="form"><h3 style="margin-top:14px">Refer to a doctor</h3>'+
+    '<label>Send to<select name="to">'+FAC.slice(1).map(function(f){return '<option>'+f+'</option>';}).join('')+'</select></label>'+
+    '<label>Summary the doctor will see<textarea name="note">'+esc(sum)+'</textarea></label>'+
+    '<p class="muted small" style="margin-top:8px">The doctor also sees the full visit history, so tests already done will not be repeated.</p>'+
+    '<div style="display:grid;gap:10px;margin-top:14px"><button class="btn primary" type="submit">Send referral</button><button class="btn" type="button" data-a="cancel">Cancel</button></div></form>';
+}
+function initPreview(){
+  var f=$('#checkup');if(!f)return;
+  f.addEventListener('input',function(){
+    var h=byId(state.sel),sys=+f.elements.sys.value,dia=+f.elements.dia.value,fbs=+f.elements.fbs.value;
+    var box=$('#preview');
+    if(!sys||!dia||!fbs){box.innerHTML='<span class="muted">Enter the blood pressure and blood sugar to see the risk flag.</span>';return;}
+    var sym=f.querySelectorAll('input[name=sym]:checked').length;
+    var e=evaluate({sys:sys,dia:dia,fbs:fbs},h.patient.age,f.elements.fam.checked,sym),R=RISK[e.level];
+    box.innerHTML='<span class="chip '+R.c+'">'+R.t+'</span><ul class="reasons">'+e.reasons.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
+  });
+}
+
+/* ---------- Doctor: records ---------- */
+function recordList(){
+  var q=state.q.trim().toLowerCase();
+  var list=hhs.filter(function(h){return lvl(h);}).filter(function(h){
+    if(q&&(h.patient.name.toLowerCase().indexOf(q)<0&&h.pid.toLowerCase().indexOf(q)<0))return false;
+    if(state.rf==='referred')return !!openRef(h.id);
+    if(state.rf==='high')return lvl(h)==='high';
+    return true;
+  });
+  if(!list.length)return '<p class="muted" style="padding:12px 6px">No patients match. Try a different name or ID.</p>';
+  return '<ul class="list">'+list.map(function(h){return '<li><button class="item" data-a="pick-patient" data-hid="'+h.id+'"'+(state.sel===h.id?' aria-current="true"':'')+'><span><b>'+h.patient.name+'</b><small>'+h.pid+', '+h.patient.age+' years old</small></span><span style="text-align:right">'+chip(lvl(h))+(openRef(h.id)?'<br><small>Referral open</small>':'')+'</span></button></li>';}).join('')+'</ul>';
+}
+function viewRecords(){
+  var f=[['all','All'],['referred','Referred'],['high','Needs referral']];
+  return '<div class="wrap"><div class="page-title"><h2>Patient records</h2><p>One shared history per patient, no matter where the check-up happened.</p></div>'+
+    '<div class="two" style="grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr)"><section class="card"><label class="small" style="font-weight:600" for="search">Find a patient</label>'+
+    '<input class="field" id="search" type="text" placeholder="Name or patient ID" value="'+esc(state.q)+'" autocomplete="off">'+
+    '<div class="seg" style="margin:12px 0" role="group" aria-label="Filter patients">'+f.map(function(x){return '<button data-a="rec-filter" data-f="'+x[0]+'" aria-pressed="'+(state.rf===x[0])+'">'+x[1]+'</button>';}).join('')+'</div>'+
+    '<div id="plist">'+recordList()+'</div></section><section class="card" id="side">'+recordDetail()+'</section></div></div>';
+}
+function recordDetail(hh){
+  var h=hh||byId(state.sel);
+  if(!h||!lvl(h))return '<h3>Select a patient</h3><p class="muted" style="margin-top:6px">Their full history appears here.</p>';
+  var p=h.patient,l=latest(h);
+  var facs={};h.visits.forEach(function(v){facs[v.source]=(facs[v.source]||0)+1;});
+  var fk=Object.keys(facs),seen={};
+  h.visits.slice().reverse().forEach(function(v){v.tests.forEach(function(t){if(!seen[t])seen[t]={date:v.date,src:v.source};});});
+  var tk=Object.keys(seen);
+  var entries=h.visits.map(function(v){return {t:'visit',date:v.date,v:v};}).concat(h.notes.map(function(n){return {t:'note',date:n.date,n:n};})).concat(refsFor(h.id).map(function(r){return {t:'ref',date:r.sentOn,r:r};}));
+  entries.sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0;});
+  var ref=refsFor(h.id)[0];
+  return '<div class="rec-head"><div><h2>'+p.name+'</h2><p class="muted">'+p.age+' years old, '+p.sex.toLowerCase()+'. Household '+h.code+', Purok '+h.purok+'.</p><p class="pid" style="margin-top:4px">'+h.pid+'</p>'+
+    '<div class="who-line" style="margin-top:10px">'+chip(l.risk.level)+'<span class="muted small">Latest: '+l.sys+'/'+l.dia+' mmHg, sugar '+l.fbs+' mg/dL</span></div></div>'+qr(h.pid,84)+'</div>'+
+    '<div class="callout" style="margin-top:14px"><b>Combined record from '+fk.length+' facilit'+(fk.length===1?'y':'ies')+'.</b> You do not need to ask the patient to repeat these.<div class="fac-chips">'+fk.map(function(k){return '<span class="chip">'+k+', '+facs[k]+' visit'+(facs[k]>1?'s':'')+'</span>';}).join('')+'</div></div>'+
+    '<h3 style="margin-top:20px">Tests already done</h3><div class="tests">'+tk.map(function(t){return '<div><b>'+t+'</b><span class="muted">'+fmt(seen[t].date)+', '+seen[t].src+'</span></div>';}).join('')+'</div>'+
+    '<h3 style="margin-top:20px">Blood pressure over time</h3>'+trend(h)+
+    (ref?'<div class="callout '+(ref.missed?'warn':'amber')+'" style="margin-top:16px"><b>Referral to '+esc(ref.to)+':</b> '+STEPS[ref.status]+(ref.missed?'. Missed follow-up.':'')+' <button class="btn sm" style="margin-left:6px" data-a="open-ref" data-rid="'+ref.id+'">Open referral</button></div>':'')+
+    '<h3 style="margin-top:20px">History</h3><ul class="timeline">'+entries.map(function(e){
+      if(e.t==='visit'){var v=e.v;return '<li><div class="when">'+fmt(v.date)+', '+v.source+'</div><div>'+v.sys+'/'+v.dia+' mmHg, sugar '+v.fbs+' mg/dL '+chip(v.risk.level)+'</div><div class="meta">Recorded by '+v.by+'. Done: '+v.tests.join(', ')+'.</div></li>';}
+      if(e.t==='note')return '<li class="note"><div class="when">'+fmt(e.date)+', note from '+esc(e.n.by)+'</div><div>'+esc(e.n.text)+'</div></li>';
+      return '<li class="ref"><div class="when">'+fmt(e.date)+', referred to '+esc(e.r.to)+'</div><div class="meta">Status now: '+STEPS[e.r.status]+'</div></li>';
+    }).join('')+'</ul>'+
+    '<form id="noteform" class="form" style="margin-top:6px"><label for="note">Add a note to the shared record</label><textarea id="note" name="note" placeholder="Diagnosis, treatment, or advice"></textarea><button class="btn teal" type="submit" style="margin-top:10px">Save note</button></form>';
+}
+
+/* ---------- Doctor: scan patient QR ---------- */
+function viewScan(){
+  var busy=state.scanning!=null,cur=byId(busy?state.scanning:state.scanned);
+  var scr=hhs.filter(function(x){return lvl(x);});
+  var picks=[].concat(
+    scr.filter(function(x){return lvl(x)==='high';}).slice(0,2),
+    scr.filter(function(x){return lvl(x)==='watch';}).slice(0,1),
+    scr.filter(function(x){return lvl(x)==='ok';}).slice(0,1),
+    hhs.filter(function(x){return !lvl(x);}).slice(0,1));
+  var vf='<div class="vf"><div class="vf-box"><span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>'+
+    (busy?qr(cur.pid,150)+'<span class="line"></span>':(cur?qr(cur.pid,150):'<span class="hint">Point the camera at the patient\'s QR code</span>'))+'</div>'+
+    '<p role="status">'+(busy?'Reading code...':(cur?'Code read: '+cur.pid:'Ready to scan'))+'</p></div>';
+  var tiles='<ul class="tiles">'+picks.map(function(x){return '<li><button class="tile" data-a="scan-card" data-hid="'+x.id+'"'+(busy?' disabled':'')+'>'+qr(x.pid,52)+'<span class="t"><b>'+x.patient.name+'</b><small>'+x.pid+'</small></span><span class="chip st">Scan this card</span></button></li>';}).join('')+'</ul>';
+  var right;
+  if(busy){
+    right='<h3>Reading the code...</h3><p class="muted" style="margin-top:6px">Looking up the shared record.</p>';
+  }else if(cur){
+    right='<div class="callout" style="margin-bottom:16px"><b>Opened by QR scan.</b> This access is logged, and the patient can see who looked at their record.</div>'+
+      (lvl(cur)?recordDetail(cur):'<div class="rec-head"><div><h2>'+cur.patient.name+'</h2><p class="muted">'+cur.patient.age+' years old, '+cur.patient.sex.toLowerCase()+'. Born '+fmt(cur.patient.dob)+'.</p><p class="pid" style="margin-top:4px">'+cur.pid+'</p></div>'+qr(cur.pid,84)+'</div><div class="callout amber" style="margin-top:14px"><b>No check-ups on record yet.</b> This patient is registered but has not been screened. A check-up done here will be added to the shared record.</div>');
+  }else{
+    right='<h3>The record appears here</h3><p class="muted" style="margin:6px 0 12px">After a scan you will see:</p><ul class="steps"><li>Who the patient is, with their risk status</li><li>Check-ups from every facility, in one timeline</li><li>Tests already done, so you can avoid repeating them</li><li>Any open referral and its progress</li></ul>';
+  }
+  return '<div class="wrap"><div class="page-title"><h2>Scan patient QR</h2><p>When a patient arrives, scan their QR code to open their shared record from any facility.</p></div>'+
+    '<div class="two" style="grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr)"><div class="stack"><section class="card">'+vf+
+    '<h3 style="margin-top:20px">Try it with a sample patient</h3><p class="muted small" style="margin-top:4px">Pick a card to scan. In the real app, the camera reads the code from the patient\'s phone or printed card.</p>'+tiles+'</section>'+
+    '<section class="card"><form id="scanform" class="form" novalidate><h3>No QR code?</h3><label for="sid">Type the patient ID<input type="text" id="sid" name="sid" placeholder="CL-26-1000" autocomplete="off"></label><p class="err" id="serr" role="alert"></p><button class="btn primary block" type="submit"'+(busy?' disabled':'')+'>Open record</button></form></section></div>'+
+    '<section class="card" id="side" aria-live="polite">'+right+'</section></div></div>';
+}
+function startScan(hid){
+  state.scanning=hid;state.scanned=null;render();
+  setTimeout(function(){
+    if(state.scanning!==hid||state.view!=='scan')return;
+    state.scanning=null;state.scanned=hid;state.sel=hid;render();
+    toast('QR code read. Opened '+byId(hid).patient.name+'\'s record.');focusSide();
+  },1300);
+}
+
+/* ---------- Referrals (all roles) ---------- */
+function viewReferrals(){
+  var list=referrals.slice().sort(function(a,b){return a.status-b.status;});
+  if(!state.rsel||!referrals.some(function(r){return r.id===state.rsel;}))state.rsel=list.length?list[0].id:null;
+  return '<div class="wrap"><div class="page-title"><h2>Referrals</h2><p>Follow every referral from the barangay to the doctor and back.</p></div>'+
+    '<div class="two" style="grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr)"><section class="card"><ul class="list">'+
+    (list.length?list.map(function(r){var h=byId(r.hid);return '<li><button class="item" data-a="pick-ref" data-rid="'+r.id+'"'+(state.rsel===r.id?' aria-current="true"':'')+'><span><b>'+h.patient.name+'</b><small>To '+r.to+', sent '+fmt(r.sentOn)+'</small></span><span style="text-align:right"><span class="chip st">'+STEPS[r.status]+'</span>'+(r.missed?'<br><span class="chip r-high" style="margin-top:4px">Missed follow-up</span>':'')+'</span></button></li>';}).join(''):'<li class="muted" style="padding:10px">No referrals yet.</li>')+
+    '</ul></section><section class="card" id="side">'+refDetail()+'</section></div></div>';
+}
+function refDetail(){
+  var r=referrals.find(function(x){return x.id===state.rsel;});
+  if(!r)return '<h3>Select a referral</h3>';
+  var h=byId(r.hid),l=latest(h),role=state.role;
+  var out='<div class="rec-head"><div><h2>'+h.patient.name+'</h2><p class="muted">'+h.patient.age+' years old, household '+h.code+'. Sent to '+esc(r.to)+' on '+fmt(r.sentOn)+'.</p></div>'+chip(l.risk.level)+'</div>'+
+    '<div class="stepper" aria-label="Referral progress">'+STEPS.map(function(s,i){return '<div class="'+(i<=r.status?'done':'')+'">'+s+'</div>';}).join('')+'</div>'+vitalsBox(l);
+  if(r.missed)out+='<div class="callout warn"><b>Missed follow-up.</b> The patient did not come on the planned date ('+(r.fu?fmt(r.fu):'')+').'+(role==='bhw'?' <button class="btn sm" style="margin-left:6px" data-a="log-visit" data-rid="'+r.id+'">Log home visit</button>':'')+'</div>';
+  if(r.fu&&!r.missed)out+='<div class="callout">Follow-up visit planned for <b>'+fmt(r.fu)+'</b>.</div>';
+  out+='<h3 style="margin-top:18px">Updates</h3><ul class="timeline">'+r.notes.slice().reverse().map(function(n){return '<li class="note"><div class="when">'+fmt(n.date)+', '+esc(n.who)+'</div><div>'+esc(n.text)+'</div></li>';}).join('')+'</ul>';
+  if(role==='doctor'){
+    if(r.status===0)out+='<button class="btn primary" data-a="ref-advance" data-rid="'+r.id+'" data-step="1">Mark as received</button>';
+    else if(r.status===1)out+='<form id="docform" class="form" data-rid="'+r.id+'"><label for="docnote">Result or advice for the health worker</label><textarea id="docnote" name="docnote" placeholder="What was found and what should the health worker do?"></textarea><button class="btn primary" type="submit" style="margin-top:10px">Mark as seen</button></form>';
+    else if(r.status===2)out+='<form id="fuform" class="form" data-rid="'+r.id+'"><label for="fudate">Follow-up date</label><input type="date" id="fudate" name="fudate" value="2026-10-16"><button class="btn primary" type="submit" style="margin-top:10px">Set follow-up</button></form>';
+    out+='<p style="margin-top:14px"><button class="btn sm" data-a="open-record" data-hid="'+h.id+'">Open full patient record</button></p>';
+  }
+  if(role==='bhw'&&r.status>=2&&r.fu&&!r.missed)out+='<button class="btn teal" data-a="sms" data-rid="'+r.id+'">Send SMS reminder</button>';
+  if(role==='officer')out+='<p class="muted small">You can see progress here. Health workers and doctors update the referral.</p>';
+  return out;
+}
+
+/* ---------- Officer: dashboard ---------- */
+function viewDashboard(){
+  var s=stats(),h=byId(state.offSel);
+  var attn=[];
+  referrals.filter(function(r){return r.missed;}).forEach(function(r){attn.push({hid:r.hid,why:'Missed follow-up after referral'});});
+  hhs.filter(function(x){return lvl(x)==='high'&&!refsFor(x.id).length;}).slice(0,3).forEach(function(x){attn.push({hid:x.id,why:'Needs referral, none sent yet'});});
+  hhs.filter(function(x){return !lvl(x)&&x.patient.age>=65;}).slice(0,3).forEach(function(x){attn.push({hid:x.id,why:'Age '+x.patient.age+', not screened yet'});});
+  var worst=s.purok.slice().sort(function(a,b){return a.pct-b.pct;})[0];
+  return '<div class="wrap"><div class="page-title"><div class="card-head" style="margin:0"><div><h2>Barangay San Isidro at a glance</h2><p>Updated live as health workers save check-ups.</p></div><button class="btn primary" data-a="report">Create monthly report</button></div></div>'+
+    '<div class="kpis"><div class="kpi"><b>'+s.pct+'%</b><span>'+s.scr+' of '+s.total+' households screened</span><div class="progress" style="margin-bottom:0"><b style="width:'+s.pct+'%"></b></div></div>'+
+    '<div class="kpi"><b>'+s.high+'</b><span>Patients who need a referral</span></div><div class="kpi"><b>'+s.open+'</b><span>Referrals still open</span></div><div class="kpi"><b>'+s.missed+'</b><span>Missed follow-up'+(s.missed===1?'':'s')+'</span></div></div>'+
+    '<div class="two"><section class="card"><div class="card-head"><h3>Household map</h3>'+filterSeg()+'</div>'+mapSVG({filter:state.filter,selected:state.offSel})+legend()+
+    (h?'<div class="info-strip"><div><b>Household '+h.code+', '+h.family+' family</b><br><span class="muted small">Purok '+h.purok+', '+(lvl(h)?'screened '+fmt(latest(h).date):'not screened yet')+'</span></div>'+chip(lvl(h))+'</div>':'<p class="muted small" style="margin-top:10px">Tap any house for details.</p>')+'</section>'+
+    '<div class="stack"><section class="card"><h3>Coverage by purok</h3><div class="bars">'+s.purok.map(function(p){return '<div class="bar"><span>Purok '+p.p+'</span><span class="track"><b style="width:'+p.pct+'%"></b></span><b>'+p.pct+'%</b></div>';}).join('')+'</div><p class="muted small">Lowest coverage: Purok '+worst.p+'. Send health workers there first.</p></section>'+
+    '<section class="card"><h3>Needs attention</h3><ul class="list" style="margin-top:6px">'+attn.map(function(a){var x=byId(a.hid);return '<li><button class="item" data-a="off-pick" data-hid="'+x.id+'"><span><b>Household '+x.code+', '+x.patient.name+'</b><small>'+a.why+'</small></span>'+chip(lvl(x))+'</button></li>';}).join('')+'</ul></section></div></div></div>';
+}
+function reportModal(){
+  var s=stats(),worst=s.purok.slice().sort(function(a,b){return a.pct-b.pct;})[0];
+  var seen=referrals.filter(function(r){return r.status>=2;}).length;
+  return '<div class="modal-bg" data-a="close-modal"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="rt" data-stop="1"><h2 id="rt">Monthly report for October 2026</h2><p class="muted" style="margin:6px 0 12px">Barangay San Isidro. Written automatically from saved check-ups, so nobody fills in forms by hand.</p><ul>'+
+    '<li><b>'+s.scr+' of '+s.total+'</b> households screened ('+s.pct+'%).</li><li><b>'+s.high+'</b> patients flagged as needing a referral. <b>'+referrals.length+'</b> referrals sent, <b>'+seen+'</b> already seen by a doctor.</li>'+
+    '<li><b>'+s.missed+'</b> missed follow-up'+(s.missed===1?'':'s')+' to visit at home.</li><li>Lowest coverage is <b>Purok '+worst.p+'</b> at '+worst.pct+'%. Suggested focus for next month.</li></ul>'+
+    '<p class="fine">In the full app this exports as a PDF for the municipal health office.</p><div style="margin-top:14px"><button class="btn primary" data-a="close-modal">Close</button></div></div></div>';
+}
+
+/* ---------- Citizen: login, health card, download ---------- */
+function citLoginView(){
+  return '<div class="wrap"><form id="citform" class="card form cit-form" novalidate><h2>Citizen log in</h2>'+
+    '<p class="muted" style="margin-top:6px">Use the patient ID on your barangay health card and your birth date.</p>'+
+    '<label for="cid">Patient ID<input type="text" id="cid" name="cid" placeholder="CL-26-1000" autocomplete="off"></label>'+
+    '<label for="cdob">Birth date<input type="date" id="cdob" name="cdob"></label>'+
+    '<p class="err" id="cerr" role="alert"></p>'+
+    '<div style="display:grid;gap:10px"><button class="btn primary" type="submit">Log in</button><button class="btn" type="button" data-a="fill-sample">Fill in a sample patient</button><button class="btn ghost" type="button" data-a="back-login">Back</button></div>'+
+    '<p class="fine">Demo only. The sample button fills in a made-up patient so you can try this screen.</p></form></div>';
+}
+function qrCard(seed,x,y,size){
+  var n=21,h=0;for(var i=0;i<seed.length;i++)h=(Math.imul(h,31)+seed.charCodeAt(i))>>>0;
+  var r=rng(h||1),d='';
+  function fin(a,b){return (a<8&&b<8)||(a>=n-8&&b<8)||(a<8&&b>=n-8);}
+  for(var b=0;b<n;b++)for(var a=0;a<n;a++){if(fin(a,b))continue;if(r()<0.5)d+='M'+a+','+b+'h1v1h-1z';}
+  function f(ox,oy){return '<path fill-rule="evenodd" d="M'+ox+','+oy+'h7v7h-7z M'+(ox+1)+','+(oy+1)+'v5h5v-5z"/><rect x="'+(ox+2)+'" y="'+(oy+2)+'" width="3" height="3"/>';}
+  return '<svg x="'+x+'" y="'+y+'" width="'+size+'" height="'+size+'" viewBox="-1 -1 '+(n+2)+' '+(n+2)+'"><rect x="-1" y="-1" width="'+(n+2)+'" height="'+(n+2)+'" fill="#ffffff"/><g fill="#0D2837"><path d="'+d+'"/>'+f(0,0)+f(n-7,0)+f(0,n-7)+'</g></svg>';
+}
+function wrapText(str,n){
+  var w=str.split(' '),lines=[],cur='';
+  w.forEach(function(x){if((cur+' '+x).trim().length>n){lines.push(cur);cur=x;}else cur=(cur+' '+x).trim();});
+  if(cur)lines.push(cur);return lines;
+}
+function cardSVG(h){
+  var p=h.patient,l=latest(h),FF=' font-family="system-ui,-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif"';
+  var t=function(x,y,size,fill,txt,extra){return '<text x="'+x+'" y="'+y+'" font-size="'+size+'" fill="'+fill+'"'+(extra||'')+'>'+esc(txt)+'</text>';};
+  var o='<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1080" viewBox="0 0 720 1080" role="img" aria-label="Health card for '+esc(p.name)+'"'+FF+'>'+
+    '<rect x="1" y="1" width="718" height="1078" rx="28" fill="#ffffff" stroke="#D6E4EC" stroke-width="2"/>'+
+    '<path d="M1,150 V29 Q1,1 29,1 H691 Q719,1 719,29 V150 Z" fill="#0E9A9A"/>'+
+    '<rect x="40" y="44" width="62" height="62" rx="16" fill="#ffffff"/><path d="M71 60v30M56 75h30" stroke="#0E9A9A" stroke-width="8" stroke-linecap="round"/>'+
+    t(122,84,34,'#ffffff','CareLink Health Card',' font-weight="700"')+t(122,116,20,'#D8F3F2','Barangay San Isidro')+
+    t(40,226,40,'#0D2837',p.name,' font-weight="700"')+
+    t(40,266,21,'#587184','Patient ID '+h.pid,' font-weight="600"')+
+    t(40,296,21,'#587184','Born '+fmt(p.dob)+', '+p.age+' years old, '+p.sex.toLowerCase())+
+    '<rect x="225" y="322" width="270" height="270" rx="18" fill="#ffffff" stroke="#D6E4EC" stroke-width="2"/>'+qrCard(h.pid,235,332,250)+
+    t(360,624,18,'#587184','Scan to open my shared health record',' text-anchor="middle"')+
+    '<line x1="40" y1="650" x2="680" y2="650" stroke="#D6E4EC" stroke-width="2"/>';
+  if(l){
+    var R=RISK[l.risk.level],col={high:['#FDE4E2','#A92B26'],watch:['#FFF1D2','#8A5A00'],ok:['#DDF3F2','#0A6F6F']}[l.risk.level];
+    o+=t(40,692,26,'#0D2837','Latest check-up',' font-weight="700"')+t(40,724,19,'#587184',fmt(l.date)+' at '+l.source);
+    [[l.sys+'/'+l.dia,'Blood pressure (mmHg)'],[String(l.fbs),'Blood sugar (mg/dL)'],[l.wt?String(l.wt):'--','Weight (kg)']].forEach(function(v,i){
+      var x=40+i*220;o+='<rect x="'+x+'" y="746" width="200" height="94" rx="14" fill="#EAF3F7"/>'+t(x+16,792,32,'#0D2837',v[0],' font-weight="700"')+t(x+16,820,15,'#587184',v[1]);
+    });
+    var w=Math.round(R.t.length*11.5+44);
+    o+='<rect x="40" y="862" width="'+w+'" height="42" rx="21" fill="'+col[0]+'"/>'+t(62,890,20,col[1],R.t,' font-weight="700"');
+    wrapText(R.a,50).forEach(function(ln,i){o+=t(40,938+i*26,20,'#0D2837',ln);});
+    var fs={};h.visits.forEach(function(v){fs[v.source]=1;});
+    o+=t(40,990,17,'#0D2837','Records held at',' font-weight="700"');
+    wrapText(Object.keys(fs).join(', '),58).forEach(function(ln,i){o+=t(40,1014+i*22,17,'#587184',ln);});
+  }else{
+    o+=t(40,692,26,'#0D2837','No check-up yet',' font-weight="700"');
+    wrapText('Ask your barangay health worker for a free screening. Your results will appear on this card.',46).forEach(function(ln,i){o+=t(40,732+i*30,22,'#587184',ln);});
+  }
+  o+=t(360,1058,15,'#8AA0AE','Demo card with made-up data',' text-anchor="middle"')+'</svg>';
+  return o;
+}
+function viewCitizen(){
+  var h=byId(state.cit),ref=refsFor(h.id)[0];
+  var vis=h.visits.length?'<ul class="list" style="margin-top:6px">'+h.visits.slice().reverse().map(function(v){return '<li style="padding:9px 6px"><b>'+fmt(v.date)+'</b> at '+v.source+'<br><span class="muted small">'+v.sys+'/'+v.dia+' mmHg, sugar '+v.fbs+' mg/dL</span></li>';}).join('')+'</ul>':'<p class="muted" style="margin-top:6px">No check-ups yet.</p>';
+  return '<div class="wrap"><div class="page-title"><h2>My health card</h2><p>Show this card at any clinic or hospital. They scan the QR code and see your history, so you do not repeat tests.</p></div>'+
+    '<div class="two" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><section class="card">'+cardSVG(h).replace('<svg ','<svg class="cardsvg" ')+'</section>'+
+    '<div class="stack"><section class="card"><h3>Take it with you</h3><p class="muted" style="margin:6px 0 14px">Save the card as a picture to keep on your phone or to print.</p><button class="btn primary block" data-a="download-card">Download my health card</button></section>'+
+    '<section class="card"><h3>Going to another hospital on your own?</h3><ol class="steps"><li>Download your card, or keep it on your phone.</li><li>Show the QR code at the registration desk.</li><li>The hospital opens your shared record, with your past results and tests.</li></ol><p class="fine">In this demo, anyone with the QR code could open the record. In the real app the hospital would sign in and you would approve access.</p></section>'+
+    (ref?'<section class="card"><h3>Your referral</h3><p style="margin-top:6px">To '+esc(ref.to)+': '+STEPS[ref.status]+(ref.fu?'. Follow-up on '+fmt(ref.fu)+'.':'.')+'</p></section>':'')+
+    '<section class="card"><h3>My visits</h3>'+vis+'</section></div></div></div>';
+}
+function svgToPng(svg,w,h,scale){
+  return new Promise(function(res,rej){
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement('canvas');c.width=w*scale;c.height=h*scale;
+      var x=c.getContext('2d');x.fillStyle='#ffffff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+      c.toBlob(function(b){b?res(b):rej(new Error('png'));},'image/png');
+    };
+    img.onerror=function(){rej(new Error('img'));};
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  });
+}
+function downloadCard(){
+  var h=byId(state.cit);
+  if(!window.claude||!window.claude.use){toast('Saving is not available here. Take a screenshot of the card instead.');return;}
+  window.claude.use('downloads').then(function(dl){
+    if(!dl){toast('Saving is not available here. Take a screenshot of the card instead.');return null;}
+    return svgToPng(cardSVG(h),720,1080,2).then(function(png){
+      return dl.save({filename:'carelink-health-card-'+h.pid+'.png',data:png}).then(function(){toast('Health card saved.');});
+    });
+  }).catch(function(err){
+    if(err&&err.code==='declined')return;
+    toast('Could not save the card. Please try again.');
+  });
+}
+
+/* ---------- render ---------- */
+function render(){
+  var app=$('#app');
+  if(state.screen==='login'){app.innerHTML=topbarLogin()+loginView();return;}
+  if(state.screen==='citlogin'){app.innerHTML=topbarLogin()+citLoginView();return;}
+  var body=state.view==='scan'?viewScan():state.view==='mycard'?viewCitizen():state.view==='households'?viewHouseholds():state.view==='records'?viewRecords():state.view==='dashboard'?viewDashboard():viewReferrals();
+  app.innerHTML=topbarApp()+tabs()+'<main id="main">'+body+'</main>'+(state.modal?reportModal():'');
+  if(state.view==='households'&&state.panel==='form')initPreview();
+  if(state.pop){setTimeout(function(){state.pop=null;},1500);}
+}
+function toast(msg){
+  var t=document.createElement('div');t.className='toast';t.textContent=msg;$('#toast').appendChild(t);
+  setTimeout(function(){t.remove();},3600);
+}
+function focusSide(){
+  if(window.matchMedia('(max-width:900px)').matches){
+    var s=document.getElementById('side');
+    if(s)s.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'start'});
+  }
+}
+
+/* ---------- actions ---------- */
+function setRole(role){
+  state.role=role;state.screen='app';
+  var views=ROLES[role].views.map(function(v){return v[0];});
+  if(views.indexOf(state.view)<0)state.view=views[0];
+  state.panel='view';state.modal=false;state.filter='all';state.scanning=null;
+  if(role==='citizen'&&state.cit==null){var c=hhs.find(function(h){return refsFor(h.id).length;})||hhs.find(function(h){return lvl(h);});state.cit=c.id;}
+  if(role==='doctor'&&!state.sel){var f=hhs.find(function(h){return openRef(h.id);})||hhs.find(function(h){return lvl(h);});state.sel=f?f.id:null;}
+  if(role==='doctor'&&state.sel&&!lvl(byId(state.sel))){var g=hhs.find(function(h){return lvl(h);});state.sel=g?g.id:null;}
+}
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-a]');if(!el)return;
+  var a=el.dataset.a;
+  if(a==='close-modal'&&e.target.closest('[data-stop]')&&!e.target.closest('button'))return;
+  switch(a){
+    case 'login':
+      if(el.dataset.role==='citizen'){state.screen='citlogin';render();window.scrollTo(0,0);break;}
+      state.view=null;setRole(el.dataset.role);render();window.scrollTo(0,0);break;
+    case 'fill-sample':{
+      var sp=hhs.find(function(h){return refsFor(h.id).length;})||hhs.find(function(h){return lvl(h);});
+      $('#cid').value=sp.pid;$('#cdob').value=sp.patient.dob;break;}
+    case 'back-login':state.screen='login';render();break;
+    case 'download-card':downloadCard();break;
+    case 'switch-role':setRole(el.dataset.role);render();break;
+    case 'signout':state.screen='login';state.role=null;state.view=null;state.sel=null;state.cit=null;render();window.scrollTo(0,0);break;
+    case 'nav':state.view=el.dataset.view;state.modal=false;state.scanning=null;render();break;
+    case 'scan-card':startScan(+el.dataset.hid);break;
+    case 'filter':state.filter=el.dataset.f;render();break;
+    case 'pick-house':{
+      var h=byId(+el.dataset.hid);
+      if(state.view==='dashboard'){state.offSel=h.id;render();break;}
+      state.sel=h.id;state.panel=lvl(h)?'view':'form';render();focusSide();break;}
+    case 'off-pick':state.offSel=+el.dataset.hid;render();break;
+    case 'new-checkup':state.panel='form';render();break;
+    case 'cancel':state.panel='view';render();break;
+    case 'done':state.panel='view';render();break;
+    case 'open-refer':state.panel='refer';render();break;
+    case 'pick-patient':state.sel=+el.dataset.hid;render();focusSide();break;
+    case 'rec-filter':state.rf=el.dataset.f;render();break;
+    case 'pick-ref':state.rsel=el.dataset.rid;render();focusSide();break;
+    case 'open-ref':state.view='referrals';state.rsel=el.dataset.rid;render();break;
+    case 'open-record':state.sel=+el.dataset.hid;state.view='records';render();break;
+    case 'ref-advance':{
+      var r=referrals.find(function(x){return x.id===el.dataset.rid;});
+      r.status=+el.dataset.step;r.notes.push({who:r.to,date:TODAY,text:'Referral received.'});
+      toast('Marked as received. The health worker can see this.');render();break;}
+    case 'log-visit':{
+      var r2=referrals.find(function(x){return x.id===el.dataset.rid;});
+      r2.missed=false;r2.notes.push({who:'Maria Santos, BHW',date:TODAY,text:'Home visit done. Patient reminded to attend the next follow-up.'});
+      toast('Home visit logged.');render();break;}
+    case 'sms':{
+      var r3=referrals.find(function(x){return x.id===el.dataset.rid;}),p=byId(r3.hid).patient;
+      toast('SMS sent to '+p.name.split(' ')[0]+': "Your follow-up check-up is on '+fmt(r3.fu)+'."');break;}
+    case 'report':state.modal=true;render();break;
+    case 'close-modal':state.modal=false;render();break;
+  }
+});
+document.addEventListener('keydown',function(e){
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.house[data-a]')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}
+  if(e.key==='Escape'&&state.modal){state.modal=false;render();}
+});
+document.addEventListener('input',function(e){
+  if(e.target.id==='search'){state.q=e.target.value;var pl=$('#plist');if(pl)pl.innerHTML=recordList();}
+});
+document.addEventListener('submit',function(e){
+  e.preventDefault();var f=e.target;
+  if(f.id==='checkup')saveCheckup(f);
+  else if(f.id==='citform'){
+    var cid=f.elements.cid.value.trim().toUpperCase(),cdob=f.elements.cdob.value;
+    var m=hhs.find(function(h){return h.pid===cid&&h.patient.dob===cdob;});
+    if(!m){$('#cerr').textContent='We could not find a patient with that ID and birth date. Check both and try again.';return;}
+    state.cit=m.id;state.view=null;state.screen='app';setRole('citizen');render();window.scrollTo(0,0);
+  }
+  else if(f.id==='scanform'){
+    var sid=f.elements.sid.value.trim().toUpperCase(),sm=hhs.find(function(h){return h.pid===sid;});
+    if(!sm){$('#serr').textContent='No patient found with that ID. Check the code and try again.';return;}
+    startScan(sm.id);
+  }
+  else if(f.id==='referform')sendRefer(f);
+  else if(f.id==='noteform'){
+    var t=f.elements.note.value.trim();if(!t){toast('Write a note first.');return;}
+    byId(state.sel).notes.push({date:TODAY,by:'Dr. Ramon Cruz',text:t});toast('Note added to the shared record.');render();
+  }else if(f.id==='docform'){
+    var r=referrals.find(function(x){return x.id===f.dataset.rid;}),txt=f.elements.docnote.value.trim();
+    r.status=2;r.notes.push({who:'Dr. Ramon Cruz',date:TODAY,text:txt||'Seen. No further notes.'});
+    if(txt)byId(r.hid).notes.push({date:TODAY,by:'Dr. Ramon Cruz',text:txt});
+    toast('Marked as seen. The health worker gets your advice.');render();
+  }else if(f.id==='fuform'){
+    var r4=referrals.find(function(x){return x.id===f.dataset.rid;}),d=f.elements.fudate.value;
+    if(!d){toast('Pick a follow-up date.');return;}
+    r4.status=3;r4.fu=d;r4.missed=false;r4.notes.push({who:'Dr. Ramon Cruz',date:TODAY,text:'Follow-up planned for '+fmt(d)+'.'});
+    toast('Follow-up set for '+fmt(d)+'.');render();
+  }
+});
+function saveCheckup(f){
+  var h=byId(state.sel);if(!h)return;
+  var sys=+f.elements.sys.value,dia=+f.elements.dia.value,fbs=+f.elements.fbs.value,wt=+f.elements.wt.value||null,err=$('#err');
+  if(!sys||!dia||!fbs){err.textContent='Enter both blood pressure numbers and the blood sugar.';return;}
+  if(sys<60||sys>260||dia<30||dia>160||fbs<30||fbs>600){err.textContent='One of the numbers looks out of range. Check it and enter it again.';return;}
+  if(dia>=sys){err.textContent='The top blood pressure number should be higher than the bottom number.';return;}
+  var fam=f.elements.fam.checked,sym=f.querySelectorAll('input[name=sym]:checked').length;
+  h.patient.fam=fam;
+  var v={date:TODAY,source:FAC[0],by:'Maria Santos, BHW',sys:sys,dia:dia,fbs:fbs,wt:wt,sym:sym,tests:BHS_TESTS.slice()};
+  v.risk=evaluate(v,h.patient.age,fam,sym);h.visits.push(v);
+  state.panel='result';state.pop=h.id;
+  toast('Check-up saved. Household '+h.code+' is now green on the map.');render();
+}
+function sendRefer(f){
+  var h=byId(state.sel),note=f.elements.note.value.trim();
+  var n=referrals.length+101;
+  referrals.unshift({id:'R-'+n,hid:h.id,to:f.elements.to.value,sentOn:TODAY,status:0,fu:null,missed:false,notes:[{who:'Maria Santos, BHW',date:TODAY,text:note}]});
+  state.panel='view';toast('Referral sent to '+f.elements.to.value+'. You will see updates under Referrals.');render();
+}
+
+render();
+})();
+</script>
+</body>
+</html>
